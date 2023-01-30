@@ -1,0 +1,5 @@
+in_dim: 128
+out_dim: 2
+dataset_len: 1280
+batch_size: 128
+shuffle: False
