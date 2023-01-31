@@ -1,42 +1,34 @@
 import argparse
-import os
-import sys
 import time
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 
-import numpy as np
 import torch
-import torch.distributed as dist
 from torch.utils.data import DataLoader
-import torch.nn as nn
-import yaml
+import wandb
 from tqdm import tqdm
-from torch import optim
 
-FILE = Path(__file__).resolve()
-ROOT = FILE.parents[0]  # YOLOv5 root directory
-if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))  # add ROOT to PATH
-ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
 import val as validate  # for end-of-epoch mAP
 from src.data.data import create_simple_dataloader
-from src.utils.general import (LOGGER, TQDM_BAR_FORMAT, init_seeds,
-                           yaml_save, config_load, is_config, is_serialized)
+from src.utils.general import (
+    LOGGER, TQDM_BAR_FORMAT, init_seeds,
+    config_load, is_config, is_serialized
+)
 from src.eval.loss import loss_fn
 from src.utils.loggers import Logger
 from src.models.simple_model import MLP
+from src.optimizers import get_optimizer
 
 
-def train(opt):  # hyp is path/to/hyp.yaml or hyp dictionary
-    data, end_epoch, noval, nosave, workers = (
-        opt.data, opt.epochs, opt.noval, opt.nosave, opt.workers
+def train(opt):
+
+    init_seeds(opt.seed, deterministic=True)
+
+    data, end_epoch, no_val, no_save, workers, model = (
+        opt.data, opt.epochs, opt.no_val, opt.no_save, opt.workers, opt.model
     )
-
-    hyp = config_load(opt.hyp)
-    model = opt.model
     if is_config(model):
         model_conf = config_load(model)
         model = MLP(**model_conf)
@@ -49,7 +41,6 @@ def train(opt):  # hyp is path/to/hyp.yaml or hyp dictionary
 
     data = config_load(data)
 
-
     train_data, val_data = data["train"], data["val"]
 
     if is_config(train_data):
@@ -60,7 +51,6 @@ def train(opt):  # hyp is path/to/hyp.yaml or hyp dictionary
     elif isinstance(train_data, DataLoader):
         train_loader = train_data
 
-
     if is_config(val_data):
         val_loader = create_simple_dataloader(
             **val_data,
@@ -69,35 +59,27 @@ def train(opt):  # hyp is path/to/hyp.yaml or hyp dictionary
     elif isinstance(val_data, DataLoader):
         val_loader = val_data
 
-
-    # Directories
-    LOGGER.info('hyperparameters: ' + ', '.join(f'{k}={v}' for k, v in hyp.items()))
-
     # Loggers
     logger = Logger(
-        "root",
         logger="wandb",
         opt=opt,
         root_logger = LOGGER,
         run_id="historical123"
     )
 
-    # Process custom dataset artifact link
-
-    init_seeds(opt.seed, deterministic=True)
-
-
     # Optimizer
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    optimizer = get_optimizer(model, opt.optimizer)
 
     # Resume
     best_metric, start_epoch = -float("inf"), 0
 
     # Start training
     t0 = time.time()
-    LOGGER.info(f'Using {train_loader.num_workers} dataloader workers\n'
-                f"Logging results to {'bold'}\n"
-                f'Starting training for {end_epoch} epochs...')
+    LOGGER.info(
+        f'Using {train_loader.num_workers} dataloader workers\n'
+        f"Logging results to {'bold'}\n"
+        f'Starting training for {end_epoch} epochs...'
+    )
     for epoch in range(start_epoch, end_epoch):  # epoch ------------------------------------------------------------------
         # on_train_epoch_start
         model.train()
@@ -120,10 +102,11 @@ def train(opt):  # hyp is path/to/hyp.yaml or hyp dictionary
 
         # Scheduler
         lr = [x['lr'] for x in optimizer.param_groups]  # for loggers
+        logger.log_metric({"lr": wandb.Histogram(lr)})
 
         # on_train_end
         final_epoch = (epoch + 1 == end_epoch)
-        if not noval or final_epoch:  # Calculate mAP
+        if not no_val or final_epoch:  # Calculate mAP
             eval_metric = validate.run(
                 data=val_loader,
                 model=model,
@@ -134,12 +117,11 @@ def train(opt):  # hyp is path/to/hyp.yaml or hyp dictionary
             # Update best mAP
             if eval_metric["val/accuracy"] > best_metric:
                 best_metric = eval_metric["val/accuracy"]
-            log_vals = [loss] + lr
             # on_validation_end()
             logger.log_metric(eval_metric)
 
             # Save model
-            if (not nosave) or final_epoch:  # if save
+            if not no_save:  # if save
                 ckpt = {
                     'epoch': epoch,
                     'best_metric': best_metric,
@@ -148,30 +130,27 @@ def train(opt):  # hyp is path/to/hyp.yaml or hyp dictionary
                     'opt': vars(opt),
                     'date': datetime.now().isoformat()
                 }
-                bin_dir = "bin"
-                last, best = f"{bin_dir}/last.pt", f"{bin_dir}/best.pt"
+                last, best = f"{opt.bin_dir}/last.pt", f"{opt.bin_dir}/best.pt"
+                is_best = best_metric == eval_metric["val/accuracy"]
                 # Save last, best and delete
                 torch.save(ckpt, last)
-                if best_metric == eval_metric["val/accuracy"]:
+                if is_best:
                     torch.save(ckpt, best)
-                if opt.save_period > 0 and epoch % opt.save_period == 0:
-                    is_best = best_metric == eval_metric["val/accuracy"]
-                    logger.log_model(bin_dir, opt, epoch, eval_metric["val/accuracy"], is_best)
+                if (epoch+1) % opt.save_period == 0 or final_epoch:
+                    logger.log_model("last.pt", opt, epoch, eval_metric["val/accuracy"], is_best)
+
+                # save best model if the last model is not already best
+                # to prevent model saving duplication
+                if final_epoch and not is_best:
+                    logger.log_model("best.pt", opt, epoch, eval_metric["val/accuracy"], best_model=True)
+
                 del ckpt
 
         # end epoch ----------------------------------------------------------------------------------------------------
     # end training -----------------------------------------------------------------------------------------------------
     LOGGER.info(f'\n{epoch - start_epoch + 1} epochs completed in {(time.time() - t0) / 3600:.3f} hours.')
-    # for f in last, best:
-    #     if f.exists():
-    #         if f is best:
-    #             LOGGER.info(f'\nValidating {f}...')
-    #             eval_metric = validate.run()  # val best model with plots
-
-    #     logger.log_model(bin_dir, opt, epoch, eval_metric["val/accuracy"])
 
     logger.end_log()
-    print("hi")
 
     return eval_metric
 
@@ -180,18 +159,15 @@ def parse_opt(known=False):
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, default="configs/model.yaml", help='initial weights path')
     parser.add_argument('--data', type=str, default="configs/data.yaml", help='dataset.yaml path')
-    parser.add_argument('--hyp', type=str, default='configs/hyp.yaml', help='hyperparameters path')
-    parser.add_argument('--epochs', type=int, default=100, help='total training epochs')
-    parser.add_argument('--resume', nargs='?', const=True, default=False, help='resume most recent training')
-    parser.add_argument('--nosave', action='store_true', help='only save final checkpoint')
-    parser.add_argument('--noval', action='store_true', help='only validate final epoch')
+    parser.add_argument('--epochs', type=int, default=50, help='total training epochs')
+    parser.add_argument('--no-save', action='store_true', help='only save final checkpoint')
+    parser.add_argument('--no-val', action='store_true', help='only validate final epoch')
     parser.add_argument('--device', default='cpu', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--optimizer', type=str, choices=['SGD', 'Adam', 'AdamW'], default='SGD', help='optimizer')
     parser.add_argument('--workers', type=int, default=8, help='max dataloader workers (per RANK in DDP mode)')
     parser.add_argument('--project', default="pytorch-project", help='save to project/name')
-    parser.add_argument('--name', default='exp', help='save to project/name')
-    parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
-    parser.add_argument('--save-period', type=int, default=-1, help='Save checkpoint every x epochs (disabled if < 1)')
+    parser.add_argument('--save-period', type=int, default=float("inf"), help='Save checkpoint every x epochs (disabled if < 1)')
+    parser.add_argument('--bin-dir', type=str, default="bin")
     parser.add_argument('--seed', type=int, default=0, help='Global training seed')
 
     return parser.parse_known_args()[0] if known else parser.parse_args()

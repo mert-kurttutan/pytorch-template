@@ -2,9 +2,9 @@
 
 This is created to start off pytorch project fast and efficiently by providing the skeleton code, for myself and others.
 
-For presentation, I chose the MNIST problem since
+For presentation, I chose the CIFAR-10 problem since
 
-* One of the simplest problems: making this repo more template-like by getting ride problem specific complexity
+* One of the simplest problems: making this repo more template-like without exposing problem specific complexity
 * Not too simple: i.e. binary digit recognition is a real-life problem, despite being solved with current deep learning methods.
 
 
@@ -27,10 +27,15 @@ Here is the source code explanation
 
 ## Getting Started
 
-Before getting started,  we need to 
+For wandb logging, you need to set up a wandb account and your API_KEY for wandb service.
 
-bluh bluh bluh
 
+## TODO
+
+- [ ] Multi GPU setting
+- [ ] Option to resume training (respecting loggers)
+- [ ] Add more logger option
+- [ ] Maybe make this repo true template
 
 
 ## References
