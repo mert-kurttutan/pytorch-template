@@ -19,7 +19,7 @@ from src.data.data import create_simple_dataloader
 from src.models.simple_model import MLP
 
 from src.eval.metric import accuracy
-from src.utils.general import (LOGGER, TQDM_BAR_FORMAT, config_load, is_config, is_serialized)
+from src.utils.utils import (LOGGER, config_load, is_config, is_serialized)
 
 @torch.inference_mode()
 def run(

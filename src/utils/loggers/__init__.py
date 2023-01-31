@@ -7,7 +7,7 @@ import os
 import pkg_resources as pkg
 import torch
 
-from ..general import LOGGER
+from ..utils import LOGGER
 from .wandb import WandbLogger
 
 LOGGERS = ( 'wandb', )
@@ -34,32 +34,17 @@ class Logger():
         self.opt = opt
         self.logger_type = logger
         self.root_logger = root_logger  # for printing results to console
-        self.run_id = run_id
 
         # W&B
         if logger == "wandb":
-            self.run = wandb.init(
-                # Set the project where this run will be logged
-                project=opt.project, 
-                # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
-                name=run_name, 
-                # Track hyperparameters and run metadata
-                config={
-                    "learning_rate": 0.02,
-                    "architecture": "CNN",
-                    "dataset": "CIFAR-10",
-                    "epochs": 30,
-                },
-                id=self.run_id
-            )
-            self.run_id = self.run.id
+            self.logger = WandbLogger(opt, run_id, run_name)
         else:
             raise NotImplementedError
 
 
     def log_metric(self, metric):
         if self.logger_type == "wandb":
-            wandb.log(metric)
+            self.logger.log_metric(metric)
         else:
             raise NotImplementedError
 
@@ -73,24 +58,11 @@ class Logger():
         fitness_score (float) -- fitness score for current epoch
         best_model (boolean) -- Boolean representing if the current checkpoint is the best yet.
         """
-        model_artifact = wandb.Artifact(
-            f"run_{self.run.id}_model",
-            type='model',
-            metadata={
-                'original_dir': str(opt.bin_dir),
-                'epochs_trained': epoch + 1,
-                'save period': opt.save_period,
-                'project': opt.project,
-                'total_epochs': opt.epochs,
-                'fitness_score': fitness_score
-            }
-        )
-        model_artifact.add_file(f"{opt.bin_dir}/{file_name}", name=file_name)
-        wandb.log_artifact(
-            model_artifact,
-            aliases=[f"epoch_{epoch}", 'best' if best_model else '']
-        )
+        if self.logger_type == "wandb":
+            self.logger.log_model(file_name, opt, epoch, fitness_score, best_model)
+        else:
+            raise NotImplementedError
         LOGGER.info(f"Saving model artifact on epoch {epoch + 1}")
 
     def end_log(self,):
-        self.run.finish()
+        self.logger.run.finish()

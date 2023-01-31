@@ -1,4 +1,3 @@
-# YOLOv5 🚀 by Ultralytics, GPL-3.0 license
 """
 General utils
 """
@@ -18,16 +17,13 @@ import numpy as np
 import torch
 import yaml
 
-FILE = Path(__file__).resolve()
-ROOT = FILE.parents[1]
+
 RANK = int(os.getenv('RANK', -1))
 
 # Settings
-DATASETS_DIR = Path(os.getenv('YOLOv5_DATASETS_DIR', ROOT.parent / 'datasets'))  # global datasets directory
-AUTOINSTALL = str(os.getenv('YOLOv5_AUTOINSTALL', True)).lower() == 'true'  # global auto-install mode
 VERBOSE = str(os.getenv('YOLOv5_VERBOSE', True)).lower() == 'true'  # global verbose mode
 TQDM_BAR_FORMAT = '{l_bar}{bar:10}{r_bar}'  # tqdm bar format
-FONT = 'Arial.ttf'  # https://ultralytics.com/assets/Arial.ttf
+FONT = 'Arial.ttf'
 
 torch.set_printoptions(linewidth=320, precision=5, profile='long')
 
@@ -107,26 +103,14 @@ def set_logging(name=LOGGING_NAME, verbose=True):
             name: {
                 "level": level,
                 "handlers": [name],
-                "propagate": False,}}})
+                "propagate": False,
+            }
+        }
+    })
 
 
 set_logging(LOGGING_NAME)  # run before defining LOGGER
 LOGGER = logging.getLogger(LOGGING_NAME)  # define globally (used in train.py, val.py, detect.py, etc.)
-
-def user_config_dir(dir='Ultralytics', env_var='YOLOV5_CONFIG_DIR'):
-    # Return path of user configuration directory. Prefer environment variable if exists. Make dir if required.
-    env = os.getenv(env_var)
-    if env:
-        path = Path(env)  # use environment variable
-    else:
-        cfg = {'Windows': 'AppData/Roaming', 'Linux': '.config', 'Darwin': 'Library/Application Support'}  # 3 OS dirs
-        path = Path.home() / cfg.get(platform.system(), '')  # OS-specific config dir
-        path = (path if is_writeable(path) else Path('/tmp')) / dir  # GCP and AWS lambda fix, only /tmp is writeable
-    path.mkdir(exist_ok=True)  # make if required
-    return path
-
-
-CONFIG_DIR = user_config_dir()  # Ultralytics settings dir
 
 
 def init_seeds(seed=42, deterministic=False):

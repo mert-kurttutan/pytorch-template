@@ -10,9 +10,9 @@ import wandb
 from tqdm import tqdm
 
 
-import val as validate  # for end-of-epoch mAP
+import val as validate
 from src.data.data import create_simple_dataloader
-from src.utils.general import (
+from src.utils.utils import (
     LOGGER, TQDM_BAR_FORMAT, init_seeds,
     config_load, is_config, is_serialized
 )
@@ -121,7 +121,7 @@ def train(opt):
             logger.log_metric(eval_metric)
 
             # Save model
-            if not no_save:  # if save
+            if not no_save or final_epoch:
                 ckpt = {
                     'epoch': epoch,
                     'best_metric': best_metric,
