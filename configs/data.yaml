@@ -1,13 +1,19 @@
 train:
-  in_dim: 128
-  out_dim: 2
-  dataset_len: 12800
-  batch_size: 32
-  shuffle: True
+  data_type: train
+  augmentation:
+    - crop
+    - horizontal_flip
 
 val:
-  in_dim: 128
-  out_dim: 2
-  dataset_len: 1280
-  batch_size: 128
-  shuffle: False
+  data_type: val
+  augmentation:
+    - crop
+    - horizontal_flip
+
+mode:
+  train:
+    batch_size: 64
+    shuffle: True
+  val:
+    batch_size: 128
+    shuffle: False
