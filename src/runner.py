@@ -191,10 +191,9 @@ class ModelRunner():
 
 
     @torch.inference_mode()
-    @staticmethod
     def validate(
-        model: nn.Module | dict | str,
-        data: DataLoader | dict | str,
+        model: nn.Module | dict | str = None,
+        data: DataLoader | dict | str = None,
         data_name='val',  # train, val, test, speed or study
         device="cpu",  # cuda device, i.e. 0 or 0,1,2,3 or cpu
         workers=8,  # max dataloader workers (per RANK in DDP mode)

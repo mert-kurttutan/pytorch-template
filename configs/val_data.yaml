@@ -1,0 +1,6 @@
+data_type: val
+augmentation:
+  - crop
+  - horizontal_flip
+batch_size: 128
+shuffle: False

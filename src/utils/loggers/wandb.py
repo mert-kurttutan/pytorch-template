@@ -57,13 +57,13 @@ class WandbLogger():
     """
 
 
-    def __init__(self, opt, run_id=None, run_name="run", job_type="Training"):
+    def __init__(self, opt, job_type="Training"):
 
         self.run = wandb.init(
             # Set the project where this run will be logged
             project=opt.project, 
             # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
-            name=run_name, 
+            name=opt.run_name, 
             # Track hyperparameters and run metadata
             config={
                 "learning_rate": 0.02,
@@ -71,7 +71,7 @@ class WandbLogger():
                 "dataset": "CIFAR-10",
                 "epochs": 30,
             },
-            id=run_id,
+            id=opt.run_id,
             resume="allow",
             job_type=job_type,
         )

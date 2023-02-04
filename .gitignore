@@ -128,6 +128,12 @@ ENV/
 env.bak/
 venv.bak/
 
+# Data folder
+data/
+
+# Wandb folder
+wandb/
+
 # Spyder project settings
 .spyderproject
 .spyproject
