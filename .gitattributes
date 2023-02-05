@@ -1,3 +1,3 @@
 # ignore jupyter notebook since they lead to
 # *misleading* language stats
-notebook/* linguist-vendored
+notebooks/* linguist-vendored
