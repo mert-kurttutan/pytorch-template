@@ -1,5 +1,6 @@
 import torch
 
+
 def accuracy(outputs, labels):
     """
     Compute the accuracy, given the outputs and labels for all images.

@@ -3,14 +3,12 @@ Logging utils
 """
 
 import os
-
 import pkg_resources as pkg
-import torch
 
 from ..utils import LOGGER
 from .wandb import WandbLogger
 
-LOGGERS = ( 'wandb', )
+LOGGERS = ('wandb',)
 RANK = int(os.getenv('RANK', -1))
 
 try:
@@ -41,13 +39,11 @@ class Logger():
         else:
             raise NotImplementedError
 
-
     def log_metric(self, metric):
         if self.logger_type == "wandb":
             self.logger.log_metric(metric)
         else:
             raise NotImplementedError
-
 
     def log_model(self, file_name, opt, epoch, fitness_score, best_model=False):
         """

@@ -4,11 +4,7 @@ import logging
 import os
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Dict
 
-
-
-from ..utils import LOGGER
 
 try:
     import wandb
@@ -30,7 +26,6 @@ def check_wandb_config_file(data_config_file):
     if Path(wandb_config).is_file():
         return wandb_config
     return data_config_file
-
 
 
 def get_run_info(run_path):
@@ -56,14 +51,13 @@ class WandbLogger():
     https://docs.wandb.com/guides/integrations/yolov5
     """
 
-
     def __init__(self, opt, job_type="Training"):
 
         self.run = wandb.init(
             # Set the project where this run will be logged
-            project=opt.project, 
+            project=opt.project,
             # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
-            name=opt.run_name, 
+            name=opt.run_name,
             # Track hyperparameters and run metadata
             config={
                 "learning_rate": 0.02,
@@ -103,7 +97,8 @@ class WandbLogger():
 
     def val_one_image(self, pred, path, im):
         """
-        Log validation data for one image. updates the result Table if validation dataset is uploaded
+        Log validation data for one image.
+        Updates the result Table if validation dataset is uploaded
 
         arguments:
         pred (list): class prediction in the format - class
@@ -112,10 +107,12 @@ class WandbLogger():
         # TODO: fill this later
         pass
 
+
 @contextmanager
 def all_logging_disabled(highest_level=logging.CRITICAL):
     """ source - https://gist.github.com/simon-weber/7853144
-    A context manager that will prevent any logging messages triggered during the body from being processed.
+    A context manager that will prevent any logging messages triggered
+    during the body from being processed.
     :param highest_level: the maximum logging level in use.
       This would only need to be changed if a custom level greater than CRITICAL is defined.
     """

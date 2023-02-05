@@ -3,6 +3,8 @@ from copy import deepcopy
 from datetime import datetime
 
 import torch
+from torch import nn
+from torch.utils.data import DataLoader
 
 import wandb
 from tqdm import tqdm
@@ -18,19 +20,8 @@ from src.eval.loss import loss_fn
 from src.utils.loggers import Logger
 from src.optimizers import get_optimizer
 
-from torch import nn
-from torch.utils.data import DataLoader
-
-import torch
-
-from src.data.data import get_cifar10_dataloader
-
 from src.eval.metric import accuracy
-from src.utils.utils import (LOGGER, config_load, is_config, is_serialized)
 
-
-
-# TODO: Use run_id to resume training
 
 class ModelRunner():
     def __init__(self, opt) -> None:
@@ -42,7 +33,7 @@ class ModelRunner():
         self.logger = Logger(
             logger="wandb",
             opt=opt,
-            root_logger = LOGGER,
+            root_logger=LOGGER,
         )
 
     def train(self):
@@ -146,7 +137,7 @@ class ModelRunner():
                     self.logger.log_metric(metric_dict)
 
                 pbar.set_description(f"{epoch}/{end_epoch-1}, loss={loss.item():.4f}")
-                # end batch ------------------------------------------------------------------------------------------------
+                # end batch ---------------------------------------------------------
 
             scheduler.step()
             # on_train_end
@@ -194,12 +185,16 @@ class ModelRunner():
                     if is_best:
                         torch.save(ckpt, best)
                     if (epoch+1) % opt.save_period == 0 or final_epoch:
-                        self.logger.log_model("last.pt", opt, epoch, eval_metric["val/val_acc"], is_best)
+                        self.logger.log_model(
+                            "last.pt", opt, epoch, eval_metric["val/val_acc"], is_best
+                        )
 
                     # save best model if the last model is not already best
                     # to prevent model saving duplication
                     if final_epoch and not is_best:
-                        self.logger.log_model("best.pt", opt, epoch, eval_metric["val/val_acc"], best_model=True)
+                        self.logger.log_model(
+                            "best.pt", opt, epoch, eval_metric["val/val_acc"], best_model=True
+                        )
 
                     del ckpt
 
@@ -211,12 +206,13 @@ class ModelRunner():
             # Epoch level metrics
             self.logger.log_metric(metric_dict)
 
-        LOGGER.info(f'\n{epoch - start_epoch + 1} epochs completed in {(time.time() - t0) / 3600:.3f} hours.')
+        LOGGER.info(
+            f'\n{epoch-start_epoch + 1} epochs completed in {(time.time() - t0) / 3600:.3f} hours.'
+        )
 
         self.logger.end_log()
 
         return eval_metric
-
 
     @torch.inference_mode()
     def validate(
@@ -249,7 +245,7 @@ class ModelRunner():
             )
         elif isinstance(data, DataLoader):
             dataloader = data
-        
+
         # evaluation metrics to compute
         eval_dict = {
             f"val/{data_name}_loss": 0,
@@ -277,6 +273,3 @@ class ModelRunner():
         LOGGER.info(eval_dict)
 
         return eval_dict
-
-
-

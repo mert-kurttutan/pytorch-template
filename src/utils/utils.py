@@ -5,9 +5,7 @@ General utils
 import logging
 import logging.config
 import os
-import platform
 import random
-import re
 import pkg_resources as pkg
 import json
 import urllib
@@ -29,7 +27,8 @@ torch.set_printoptions(linewidth=320, precision=5, profile='long')
 
 
 def is_ascii(s=''):
-    # Is string composed of all ASCII (no UTF) characters? (note str().isascii() introduced in python 3.7)
+    # Is string composed of all ASCII (no UTF) characters?
+    # (note str().isascii() introduced in python 3.7)
     s = str(s)  # convert list, tuple, None, etc. to str
     return len(s.encode().decode('ascii', 'ignore')) == len(s)
 
@@ -39,10 +38,12 @@ def yaml_load(file='data.yaml'):
     with open(file, errors='ignore') as f:
         return yaml.safe_load(f)
 
+
 def json_load(file='data.json'):
     # Single-line safe yaml loading
     with open(file, errors='ignore') as f:
         return json.load(f)
+
 
 def config_load(file_name: str | dict):
     if isinstance(file_name, dict):
@@ -51,6 +52,7 @@ def config_load(file_name: str | dict):
         return json_load(file_name)
     elif file_name.endswith((".yaml", ".yml")):
         return yaml_load(file_name)
+
 
 def is_config(file_name: str | dict):
     if isinstance(file_name, dict):
@@ -61,14 +63,15 @@ def is_config(file_name: str | dict):
     return file_name.endswith(config_types)
 
 
-def is_serialized(file_name:str):
+def is_serialized(file_name: str):
     if not isinstance(file_name, str):
         return False
     return file_name.endswith(".pt")
 
 
 def is_writeable(dir, test=False):
-    # Return True if directory has write permissions, test opening a file with write permissions if test=True
+    # Return True if directory has write permissions,
+    # test opening a file with write permissions if test=True
     if not test:
         return os.access(dir, os.W_OK)  # possible issues on Windows
     file = Path(dir) / 'tmp.txt'
@@ -98,7 +101,7 @@ def set_logging(name=LOGGING_NAME, verbose=True):
             name: {
                 "class": "logging.StreamHandler",
                 "formatter": name,
-                "level": level,}},
+                "level": level}},
         "loggers": {
             name: {
                 "level": level,
@@ -110,7 +113,7 @@ def set_logging(name=LOGGING_NAME, verbose=True):
 
 
 set_logging(LOGGING_NAME)  # run before defining LOGGER
-LOGGER = logging.getLogger(LOGGING_NAME)  # define globally (used in train.py, val.py, detect.py, etc.)
+LOGGER = logging.getLogger(LOGGING_NAME)  # define globally (used by ModelRunner)
 
 
 def init_seeds(seed=42, deterministic=False):
@@ -121,8 +124,10 @@ def init_seeds(seed=42, deterministic=False):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)  # for Multi-GPU, exception safe
-    # torch.backends.cudnn.benchmark = True  # AutoBatch problem https://github.com/ultralytics/yolov5/issues/9287
-    if deterministic and check_version(torch.__version__, '1.12.0'):  # https://github.com/ultralytics/yolov5/pull/8213
+    # AutoBatch problem https://github.com/ultralytics/yolov5/issues/9287
+    # torch.backends.cudnn.benchmark = True
+    # https://github.com/ultralytics/yolov5/pull/8213
+    if deterministic and check_version(torch.__version__, '1.12.0'):
         torch.use_deterministic_algorithms(True)
         torch.backends.cudnn.deterministic = True
         os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
@@ -132,23 +137,31 @@ def init_seeds(seed=42, deterministic=False):
 def yaml_save(file='data.yaml', data={}):
     # Single-line safe yaml saving
     with open(file, 'w') as f:
-        yaml.safe_dump({k: str(v) if isinstance(v, Path) else v for k, v in data.items()}, f, sort_keys=False)
+        yaml.safe_dump(
+            {k: str(v) if isinstance(v, Path) else v for k, v in data.items()},
+            f, sort_keys=False
+        )
 
 
-def check_version(current='0.0.0', minimum='0.0.0', name='version ', pinned=False, hard=False, verbose=False):
+def check_version(
+    current='0.0.0', minimum='0.0.0', name='version ',
+    pinned=False, hard=False, verbose=False
+):
     # Check version vs. required version
     current, minimum = (pkg.parse_version(x) for x in (current, minimum))
     result = (current == minimum) if pinned else (current >= minimum)  # bool
-    s = f'WARNING {name}{minimum} is required by project, but {name}{current} is currently installed'  # string
+    s = (
+        f"WARNING {name}{minimum} is required by project, "
+        "but {name}{current} is currently installed"
+    )
     if hard:
-        assert result, s # assert min requirements met
+        assert result, s  # assert min requirements met
     if verbose and not result:
         LOGGER.warning(s)
     return result
 
 
-
 def url2file(url):
     # Convert URL to filename, i.e. https://url.com/file.txt?auth -> file.txt
     url = str(Path(url)).replace(':/', '://')  # Pathlib turns :// -> :/
-    return Path(urllib.parse.unquote(url)).name.split('?')[0]  # '%2F' to '/', split https://url.com/file.txt?auth
+    return Path(urllib.parse.unquote(url)).name.split('?')[0]
