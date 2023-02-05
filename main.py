@@ -6,6 +6,7 @@ from src.runner import ModelRunner
 def parse_opt(known=False):
     parser = argparse.ArgumentParser()
     parser.add_argument('--run-type', default='train', choices=['train', 'val',], help='type of job to run, train, val, etc')
+    parser.add_argument('--resume', action='store_true', help='only save final checkpoint')
     parser.add_argument('--model', type=str, default="configs/model.yaml", help='initial weights path')
     parser.add_argument('--data', type=str, default="configs/data.yaml", help='dataset.yaml path')
     parser.add_argument('--epochs', type=int, default=50, help='total training epochs')
@@ -26,7 +27,6 @@ def parse_opt(known=False):
 
 if __name__ == "__main__":
     opt = parse_opt()
-    print(opt.run_type)
     runner = ModelRunner(opt)
     if opt.run_type == "train":
         runner.train()

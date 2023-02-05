@@ -36,6 +36,8 @@ class ModelRunner():
     def __init__(self, opt) -> None:
 
         self.opt = opt
+
+    def init_log(self, opt) -> None:
         # Loggers
         self.logger = Logger(
             logger="wandb",
@@ -51,16 +53,45 @@ class ModelRunner():
             opt.data, opt.epochs, opt.no_val, opt.no_save, opt.workers, opt.model
         )
 
-        opt.optimizer = config_load(opt.optimizer)
-        if is_config(model):
-            model_conf = config_load(model)
-            model = get_model(model_conf)
-        elif is_serialized(model):
-            raise NotImplementedError
+        # Resume
+        best_metric, start_epoch = -float("inf"), 0
 
+        if opt.resume:
+            ckpt = torch.load(opt.model)
+            model_conf = ckpt["model_config"]
+            model = get_model(model_conf)
+            model.load_state_dict(ckpt["model"])
+            opt_conf = ckpt["opt_config"]
+            optimizer = get_optimizer(model, ckpt["opt_config"])
+            scheduler = get_scheduler(optimizer, ckpt["opt_config"])
+            optimizer.load_state_dict(ckpt["optimizer"])
+            scheduler.load_state_dict(ckpt["scheduler"])
+            best_metric, start_epoch = ckpt["best_metric"], ckpt["epoch"] + 1
+
+            # resume logger as well
+            opt.run_id = ckpt["opt"]["run_id"]
+            opt.run_name = ckpt["opt"]["run_name"]
+
+        else:
+            if is_config(model):
+                model_conf = config_load(model)
+                model = get_model(model_conf)
+
+            elif is_serialized(model):
+                ckpt = torch.load(opt.model)
+                model_conf = ckpt["model_config"]
+                model = get_model(model_conf)
+                model.load_state_dict(ckpt["model"])
+
+            # Optimizer
+            opt_conf = config_load(opt.optimizer)
+            opt_conf["epochs"] = opt.epochs
+            optimizer = get_optimizer(model, opt_conf)
+            scheduler = get_scheduler(optimizer, opt_conf)
+
+        self.init_log(opt)
         # Configure
         model = model.to(device)
-
         data = config_load(data)
 
         train_data, val_data = data["train"], data["val"]
@@ -84,12 +115,6 @@ class ModelRunner():
             num_workers=workers,
         )
 
-        # Optimizer
-        optimizer = get_optimizer(model, opt)
-        scheduler = get_scheduler(optimizer, opt)
-
-        # Resume
-        best_metric, start_epoch = -float("inf"), 0
         n_steps_per_epoch = len(train_loader)
 
         # Start training
@@ -145,7 +170,7 @@ class ModelRunner():
 
                 metric_dict = {**metric_dict, **eval_metric, **train_metric}
 
-                # Update best mAP
+                # Update best metric
                 if eval_metric["val/val_acc"] > best_metric:
                     best_metric = eval_metric["val/val_acc"]
 
@@ -154,8 +179,11 @@ class ModelRunner():
                     ckpt = {
                         'epoch': epoch,
                         'best_metric': best_metric,
-                        'model': deepcopy(model),
+                        'model': deepcopy(model).state_dict(),
+                        "model_config": model_conf,
+                        "opt_config": opt_conf,
                         'optimizer': optimizer.state_dict(),
+                        'scheduler': scheduler.state_dict(),
                         'opt': vars(opt),
                         'date': datetime.now().isoformat()
                     }

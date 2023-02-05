@@ -76,6 +76,9 @@ class WandbLogger():
             job_type=job_type,
         )
 
+        opt.run_name = self.run.name
+        opt.run_id = self.run.id
+
     def log_metric(self, metric):
         self.run.log(metric)
 
