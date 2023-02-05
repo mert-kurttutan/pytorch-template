@@ -51,7 +51,7 @@ class WandbLogger():
     https://docs.wandb.com/guides/integrations/yolov5
     """
 
-    def __init__(self, opt, job_type="Training"):
+    def __init__(self, opt, run_config, job_type="Training"):
 
         self.run = wandb.init(
             # Set the project where this run will be logged
@@ -59,12 +59,7 @@ class WandbLogger():
             # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
             name=opt.run_name,
             # Track hyperparameters and run metadata
-            config={
-                "learning_rate": 0.02,
-                "architecture": "CNN",
-                "dataset": "CIFAR-10",
-                "epochs": 30,
-            },
+            config=run_config,
             id=opt.run_id,
             resume="allow",
             job_type=job_type,

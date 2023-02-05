@@ -28,12 +28,13 @@ class ModelRunner():
 
         self.opt = opt
 
-    def init_log(self, opt) -> None:
+    def init_log(self, opt, run_conf) -> None:
         # Loggers
         self.logger = Logger(
             logger="wandb",
             opt=opt,
             root_logger=LOGGER,
+            run_config=run_conf
         )
 
     def train(self):
@@ -80,10 +81,10 @@ class ModelRunner():
             optimizer = get_optimizer(model, opt_conf)
             scheduler = get_scheduler(optimizer, opt_conf)
 
-        self.init_log(opt)
+        data = config_load(data)
+        self.init_log(opt, run_conf={"model": model_conf, "data": data, "optimizer": opt_conf})
         # Configure
         model = model.to(device)
-        data = config_load(data)
 
         train_data, val_data = data["train"], data["val"]
         assert is_config(train_data)
@@ -178,7 +179,10 @@ class ModelRunner():
                         'opt': vars(opt),
                         'date': datetime.now().isoformat()
                     }
-                    last, best = f"{opt.bin_dir}/last.pt", f"{opt.bin_dir}/best.pt"
+                    last, best = (
+                        f"{opt.bin_dir}/{opt.run_name}_last.pt",
+                        f"{opt.bin_dir}/{opt.run_name}_best.pt"
+                    )
                     is_best = best_metric == eval_metric["val/val_acc"]
                     # Save last, best and delete
                     torch.save(ckpt, last)
@@ -186,7 +190,8 @@ class ModelRunner():
                         torch.save(ckpt, best)
                     if (epoch+1) % opt.save_period == 0 or final_epoch:
                         self.logger.log_model(
-                            "last.pt", opt, epoch, eval_metric["val/val_acc"], is_best
+                            f"{opt.run_name}_last.pt", opt, epoch,
+                            eval_metric["val/val_acc"], is_best
                         )
 
                     # save best model if the last model is not already best

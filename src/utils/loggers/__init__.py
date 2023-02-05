@@ -28,14 +28,16 @@ except (ImportError, AssertionError):
 
 class Logger():
     # YOLOv5 Loggers class
-    def __init__(self, logger="wandb", opt=None, root_logger=None):
+    def __init__(self, logger="wandb", opt=None, run_config=None, root_logger=None):
         self.opt = opt
         self.logger_type = logger
         self.root_logger = root_logger  # for printing results to console
+        if run_config is None:
+            run_config = {}
 
         # W&B
         if logger == "wandb":
-            self.logger = WandbLogger(opt)
+            self.logger = WandbLogger(opt, run_config)
         else:
             raise NotImplementedError
 
