@@ -24,7 +24,6 @@ For presentation, I chose the CIFAR-10 problem since
 This section is important if you want to use this template in your workflow and or want to improve the template. The main feature of the project is to provide a structure as low level as possible while having important features, e.g. resume training, using checkpoints etc.
 
 
-
 ## Getting Started
 
 For wandb logging, you need to set up a wandb account and your API_KEY for wandb service.
