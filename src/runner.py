@@ -204,7 +204,7 @@ class ModelRunner():
                     del ckpt
 
             # Add epoch value for better visuals
-            metric_dict["lr"] = {str(idx): x['lr'] for idx, x in enumerate(optimizer.param_groups)}
+            metric_dict["params/lr"] = {str(idx): x['lr'] for idx, x in enumerate(optimizer.param_groups)}
             metric_dict["val/epoch"] = epoch
 
             # Epoch level metrics
