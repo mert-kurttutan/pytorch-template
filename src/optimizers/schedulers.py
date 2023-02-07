@@ -1,6 +1,6 @@
 import math
 
-from torch.optim import lr_scheduler
+import timm.scheduler as scheduler
 
 
 def one_cycle(y1=0.0, y2=1.0, steps=100):
@@ -10,11 +10,13 @@ def one_cycle(y1=0.0, y2=1.0, steps=100):
 
 def get_scheduler(optimizer, opt_config):
     # Scheduler
-    if opt_config["cos_lr"]:
-        lf = one_cycle(1, opt_config['lrf'], opt_config["epochs"])
-    else:
-        lf = lambda x: (
-            (1 - x / opt_config["epochs"]) * (1.0 - opt_config['lrf']) + opt_config['lrf']
-        )
-
-    return lr_scheduler.LambdaLR(optimizer, lr_lambda=lf)
+    return scheduler.CosineLRScheduler(
+        optimizer,
+        t_initial=opt_config["epochs"],
+        cycle_decay=0.5,
+        lr_min=1e-6,
+        t_in_epochs=True,
+        warmup_t=3,
+        warmup_lr_init=1e-4,
+        cycle_limit=1,
+    )

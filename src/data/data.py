@@ -5,67 +5,57 @@
 
 import torch
 import torchvision
-import torchvision.transforms as transforms
 
 from torch.utils.data import DataLoader
+import timm
 
 
 def get_dataset_cifar10(
-    data_type, augmentation
+    data_type, img_size,
 ) -> torch.utils.data.dataloader.DataLoader:
     """
     creates and return train/dev dataloader
     with hyperparameters (params.subset_percent = 1.)
     """
-    transform_list = []
-
     # apply co-variant transformation if wanted
     # using random crops and horizontal flip for train set
-    if augmentation is not None or len(augmentation) == 0:
-
-        for aug_func in augmentation:
-            if aug_func == "crop":
-                transform_list.append(transforms.RandomCrop(32, padding=4))
-
-            elif aug_func == "horizontal_flip":
-                # randomly flip image horizontally
-                transform_list.append(transforms.RandomHorizontalFlip())
-
-    # standard pre-processing
-    transform_list.extend([
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))
-    ])
-    train_transformer = transforms.Compose(transform_list)
+    cifar10_mean = (0.49139968, 0.48215827 ,0.44653124)
+    cifar10_std = (0.24703233, 0.24348505, 0.26158768)
+    train_transforms = timm.data.create_transform(
+        input_size=img_size,
+        is_training=True,
+        mean=cifar10_mean,
+        std=cifar10_std,
+        auto_augment="rand-m7-mstd0.5-inc1",
+    )
 
     # transformer for dev set
-    dev_transformer = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))
-    ])
+    dev_transforms = timm.data.create_transform(
+        input_size=img_size, mean=cifar10_mean, std=cifar10_std
+    )
 
     if data_type == 'train':
         dataset = torchvision.datasets.CIFAR10(
             root='./data/cifar10', train=True,
-            download=True, transform=train_transformer
+            download=True, transform=train_transforms
         )
     else:
         dataset = torchvision.datasets.CIFAR10(
             root='./data/cifar10', train=False,
-            download=True, transform=dev_transformer
+            download=True, transform=dev_transforms
         )
 
     return dataset
 
 
 def get_cifar10_dataloader(
-    data_type, augmentation,
+    dataset_config,
     batch_size,
     shuffle,
     num_workers,
 ):
 
-    cifar10_dataset = get_dataset_cifar10(data_type, augmentation)
+    cifar10_dataset = get_dataset_cifar10(**dataset_config)
     return DataLoader(
         dataset=cifar10_dataset,
         batch_size=batch_size,

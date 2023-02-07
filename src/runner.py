@@ -140,7 +140,7 @@ class ModelRunner():
                 pbar.set_description(f"{epoch}/{end_epoch-1}, loss={loss.item():.4f}")
                 # end batch ---------------------------------------------------------
 
-            scheduler.step()
+            scheduler.step(epoch+1)
             # on_train_end
             final_epoch = (epoch + 1 == end_epoch)
             if (not no_val or final_epoch):

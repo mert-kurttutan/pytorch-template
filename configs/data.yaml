@@ -1,19 +1,17 @@
 train:
-  data_type: train
-  augmentation:
-    - crop
-    - horizontal_flip
+  dataset_config:
+    data_type: train
+    img_size: 32
 
 val:
-  data_type: val
-  augmentation:
-    - crop
-    - horizontal_flip
+  dataset_config:
+    data_type: train
+    img_size: 32
 
 mode:
   train:
-    batch_size: 64
+    batch_size: 128
     shuffle: True
   val:
-    batch_size: 128
+    batch_size: 1024
     shuffle: False
