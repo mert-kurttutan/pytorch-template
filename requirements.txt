@@ -2,3 +2,4 @@ wandb
 torch
 torchvision
 torchaudio
+timm
