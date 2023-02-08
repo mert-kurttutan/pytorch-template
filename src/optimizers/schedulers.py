@@ -16,7 +16,7 @@ def get_scheduler(optimizer, opt_config):
         cycle_decay=0.5,
         lr_min=1e-6,
         t_in_epochs=True,
-        warmup_t=3,
+        warmup_t=opt_config["epochs"]//10,
         warmup_lr_init=1e-4,
         cycle_limit=1,
     )
