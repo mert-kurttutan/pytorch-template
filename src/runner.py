@@ -198,7 +198,7 @@ class ModelRunner():
                     # to prevent model saving duplication
                     if final_epoch and not is_best:
                         self.logger.log_model(
-                            "best.pt", opt, epoch, eval_metric["val/val_acc"], best_model=True
+                            f"{opt.run_name}_best.pt", opt, epoch, eval_metric["val/val_acc"], best_model=True
                         )
 
                     del ckpt
