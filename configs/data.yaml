@@ -2,6 +2,7 @@ train:
   dataset_config:
     data_type: train
     img_size: 32
+    auto_augment_str: rand-m1-mstd0.5-inc1
 
 val:
   dataset_config:

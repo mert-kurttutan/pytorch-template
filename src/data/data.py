@@ -11,7 +11,7 @@ import timm
 
 
 def get_dataset_cifar10(
-    data_type, img_size,
+    data_type, img_size, auto_augment_str="rand-m1-mstd0.5-inc1",
 ) -> torch.utils.data.dataloader.DataLoader:
     """
     creates and return train/dev dataloader
@@ -26,7 +26,7 @@ def get_dataset_cifar10(
         is_training=True,
         mean=cifar10_mean,
         std=cifar10_std,
-        auto_augment="rand-m7-mstd0.5-inc1",
+        auto_augment=auto_augment_str,
     )
 
     # transformer for dev set

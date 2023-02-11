@@ -6,7 +6,6 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-import wandb
 from tqdm import tqdm
 
 from src.models import get_model
@@ -101,12 +100,6 @@ class ModelRunner():
             num_workers=workers,
         )
 
-        train_loader_eval = get_cifar10_dataloader(
-            **train_data,
-            **data["mode"]["val"],
-            num_workers=workers,
-        )
-
         n_steps_per_epoch = len(train_loader)
 
         # Start training
@@ -152,15 +145,7 @@ class ModelRunner():
                     workers=workers,
                 )
 
-                train_metric = ModelRunner.validate(
-                    data=train_loader_eval,
-                    model=model,
-                    device=opt.device,
-                    data_name="train",
-                    workers=workers,
-                )
-
-                metric_dict = {**metric_dict, **eval_metric, **train_metric}
+                metric_dict = {**metric_dict, **eval_metric}
 
                 # Update best metric
                 if eval_metric["val/val_acc"] > best_metric:
