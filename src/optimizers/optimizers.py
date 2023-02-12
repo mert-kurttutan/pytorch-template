@@ -13,7 +13,7 @@ def get_optimizer(model, opt_config):
         return optim.Adam(model.parameters(), lr=opt_config["lr0"])
 
     elif opt_config["type"] == "adamw":
-        return optim.Adam(
+        return optim.AdamW(
             model.parameters(), lr=opt_config["lr0"],
             weight_decay=opt_config["weight_decay"]
         )
