@@ -6,8 +6,6 @@
 import torch
 import torchvision
 
-import torchvision.transforms as transforms
-
 from torch.utils.data import DataLoader
 import timm
 
@@ -21,7 +19,7 @@ def get_dataset_cifar10(
     """
     # apply co-variant transformation if wanted
     # using random crops and horizontal flip for train set
-    cifar10_mean = (0.49139968, 0.48215827 ,0.44653124)
+    cifar10_mean = (0.49139968, 0.48215827, 0.44653124)
     cifar10_std = (0.24703233, 0.24348505, 0.26158768)
     train_transforms = timm.data.create_transform(
         input_size=img_size,
@@ -30,7 +28,7 @@ def get_dataset_cifar10(
         std=cifar10_std,
         auto_augment=auto_augment_str,
     )
-    train_transforms.transforms[0].scale= (0.8, 1.0)
+    train_transforms.transforms[0].scale = (0.8, 1.0)
 
     # transformer for dev set
     dev_transforms = timm.data.create_transform(

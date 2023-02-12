@@ -75,7 +75,6 @@ class ModelRunner():
                 model = get_model(model_conf)
                 model.load_state_dict(ckpt["model"])
 
-
             # Configure
             model = model.to(device)
             # Optimizer
@@ -133,7 +132,9 @@ class ModelRunner():
                     self.logger.log_metric(metric_dict)
 
                 acc = accuracy(train_y_hat, train_y).item()
-                pbar.set_description(f"{epoch}/{end_epoch-1}, loss={loss.item():.4f}, acc={acc:.4f}")
+                pbar.set_description(
+                    f"{epoch}/{end_epoch-1}, loss={loss.item():.4f}, acc={acc:.4f}"
+                )
                 # end batch ---------------------------------------------------------
 
             scheduler.step(epoch+1)
@@ -186,13 +187,16 @@ class ModelRunner():
                     # to prevent model saving duplication
                     if final_epoch and not is_best:
                         self.logger.log_model(
-                            f"{opt.run_name}_best.pt", opt, epoch, eval_metric["val/val_acc"], best_model=True
+                            f"{opt.run_name}_best.pt", opt, epoch,
+                            eval_metric["val/val_acc"], best_model=True
                         )
 
                     del ckpt
 
             # Add epoch value for better visuals
-            metric_dict["params/lr"] = {str(idx): x['lr'] for idx, x in enumerate(optimizer.param_groups)}
+            metric_dict["params/lr"] = {
+                str(idx): x['lr'] for idx, x in enumerate(optimizer.param_groups)
+            }
             metric_dict["val/epoch"] = epoch
 
             # Epoch level metrics
