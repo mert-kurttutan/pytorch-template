@@ -19,11 +19,11 @@ def get_model(config):
     if config["model_name"] == "base_cnn":
         return BaseCNN(config)
     else:
-        improve_classifier = config.get("improve_classifier", True)
+        improve_classifier = config.pop("improve_classifier", True)
         model = timm.create_model(**config)
+        config["improve_classifier"] = True
         if improve_classifier:
             in_dim = model.get_classifier().in_features
             out_dim = model.get_classifier().out_features
             model.fc = get_classifier_head(in_dim, out_dim)
         return model
-
