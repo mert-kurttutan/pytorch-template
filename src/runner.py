@@ -51,6 +51,7 @@ class ModelRunner():
             ckpt = torch.load(opt.model)
             model_conf = ckpt["model_config"]
             model = get_model(model_conf)
+            model = model.to(device)
             model.load_state_dict(ckpt["model"])
             opt_conf = ckpt["opt_config"]
             optimizer = get_optimizer(model, ckpt["opt_config"])
@@ -74,6 +75,9 @@ class ModelRunner():
                 model = get_model(model_conf)
                 model.load_state_dict(ckpt["model"])
 
+
+            # Configure
+            model = model.to(device)
             # Optimizer
             opt_conf = config_load(opt.optimizer)
             opt_conf["epochs"] = opt.epochs
@@ -82,8 +86,6 @@ class ModelRunner():
 
         data = config_load(data)
         self.init_log(opt, run_conf={"model": model_conf, "data": data, "optimizer": opt_conf})
-        # Configure
-        model = model.to(device)
 
         train_data, val_data = data["train"], data["val"]
         assert is_config(train_data)
