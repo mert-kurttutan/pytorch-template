@@ -7,6 +7,10 @@ For presentation, I chose the CIFAR-10 problem since
 * One of the simplest problems: making this repo more template-like without exposing problem specific complexity
 * Not too simple: i.e. image classificaton is a real-life problem, despite this particular example begin somewhat simple for the current status of deep learning
 
+## WANDB Logs
+
+You can see all the results (loss, accuracy, learning rate, pretrained models used) in the WANDB project page [here](https://wandb.ai/kurttutan-mert/pytorch-cifar10?workspace=user-). It also includes `%99.3 validation accuracy` on CIFAR10, very close to SOTA.
+
 ## Project Structure
 
 * assets: items like picture, logo svg, etc
