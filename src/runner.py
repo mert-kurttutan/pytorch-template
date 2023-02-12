@@ -101,7 +101,6 @@ class ModelRunner():
         )
 
         n_steps_per_epoch = len(train_loader)
-        print(optimizer)
 
         # Start training
         t0 = time.time()
