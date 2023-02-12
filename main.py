@@ -14,7 +14,6 @@ def parse_opt(known=False):
     parser.add_argument('--no-val', action='store_true', help='only validate final epoch')
     parser.add_argument('--device', default='cpu', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--optimizer', type=str, default="configs/sgd.yaml", help='dataset.yaml path')
-    parser.add_argument('--workers', type=int, default=8, help='max dataloader workers (per RANK in DDP mode)')
     parser.add_argument('--project', default="pytorch-cifar10", help='save to project/name')
     parser.add_argument('--save-period', type=int, default=float("inf"), help='Save checkpoint every x epochs')
     parser.add_argument('--bin-dir', type=str, default="bin", help="Folder to store binary files of models")

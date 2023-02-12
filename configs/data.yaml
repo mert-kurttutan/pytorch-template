@@ -9,6 +9,8 @@ val:
     data_type: train
     img_size: 32
 
+workers: 4
+
 mode:
   train:
     batch_size: 128

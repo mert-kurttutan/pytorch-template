@@ -40,8 +40,8 @@ class ModelRunner():
         opt = self.opt
         init_seeds(opt.seed, deterministic=True)
         device = "cuda" if opt.device != "cpu" else opt.device
-        data, end_epoch, no_val, no_save, workers, model = (
-            opt.data, opt.epochs, opt.no_val, opt.no_save, opt.workers, opt.model
+        data, end_epoch, no_val, no_save, model = (
+            opt.data, opt.epochs, opt.no_val, opt.no_save, opt.model
         )
 
         # Resume
@@ -91,16 +91,17 @@ class ModelRunner():
         train_loader = get_cifar10_dataloader(
             **train_data,
             **data["mode"]["train"],
-            num_workers=workers,
+            num_workers=data["workers"],
         )
 
         val_loader = get_cifar10_dataloader(
             **val_data,
             **data["mode"]["val"],
-            num_workers=workers,
+            num_workers=data["workers"],
         )
 
         n_steps_per_epoch = len(train_loader)
+        print(optimizer)
 
         # Start training
         t0 = time.time()
@@ -131,7 +132,7 @@ class ModelRunner():
                     self.logger.log_metric(metric_dict)
 
                 acc = accuracy(train_y_hat, train_y).item()
-                pbar.set_description(f"{epoch}/{end_epoch-1}, loss={loss.item():.4f}, la={acc.item():.4f}")
+                pbar.set_description(f"{epoch}/{end_epoch-1}, loss={loss.item():.4f}, acc={acc:.4f}")
                 # end batch ---------------------------------------------------------
 
             scheduler.step(epoch+1)
@@ -143,7 +144,7 @@ class ModelRunner():
                     model=model,
                     compute_loss=loss_fn,
                     device=opt.device,
-                    workers=workers,
+                    workers=data["workers"],
                 )
 
                 metric_dict = {**metric_dict, **eval_metric}
