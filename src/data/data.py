@@ -6,6 +6,8 @@
 import torch
 import torchvision
 
+import torchvision.transforms as transforms
+
 from torch.utils.data import DataLoader
 import timm
 
@@ -28,6 +30,7 @@ def get_dataset_cifar10(
         std=cifar10_std,
         auto_augment=auto_augment_str,
     )
+    train_transforms.transforms[0].scale= (0.8, 1.0)
 
     # transformer for dev set
     dev_transforms = timm.data.create_transform(

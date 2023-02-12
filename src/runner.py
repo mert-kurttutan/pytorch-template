@@ -130,7 +130,8 @@ class ModelRunner():
                 if i+1 < n_steps_per_epoch:
                     self.logger.log_metric(metric_dict)
 
-                pbar.set_description(f"{epoch}/{end_epoch-1}, loss={loss.item():.4f}")
+                acc = accuracy(train_y_hat, train_y).item()
+                pbar.set_description(f"{epoch}/{end_epoch-1}, loss={loss.item():.4f}, la={acc.item():.4f}")
                 # end batch ---------------------------------------------------------
 
             scheduler.step(epoch+1)
