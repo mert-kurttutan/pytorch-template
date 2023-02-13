@@ -249,21 +249,22 @@ class ModelRunner():
         }
 
         LOGGER.info(f"Validation {data_name} started")
+        dataset_len = 0
         for x, y in dataloader:
-            batch_weight = x.shape[0] / dataloader.batch_size
             x, y = x.to(device), y.to(device)
+            dataset_len += x.shape[0]
 
             # start of validation step
             y_hat = model(x)
 
             # update metrics
-            eval_dict[f"val/{data_name}_acc"] += accuracy(y_hat, y).item() * batch_weight
+            eval_dict[f"val/{data_name}_acc"] += accuracy(y_hat, y).item() * x.shape[0]
             if compute_loss:
-                eval_dict[f"val/{data_name}_loss"] += compute_loss(y_hat, y).item() * batch_weight
+                eval_dict[f"val/{data_name}_loss"] += compute_loss(y_hat, y).item() * x.shape[0]
 
         # turn sum -> mean (over batch)
-        eval_dict[f"val/{data_name}_loss"] /= len(dataloader)
-        eval_dict[f"val/{data_name}_acc"] /= len(dataloader)
+        eval_dict[f"val/{data_name}_loss"] /= dataset_len
+        eval_dict[f"val/{data_name}_acc"] /= dataset_len
         if not compute_loss:
             del eval_dict[f"val/{data_name}_loss"]
         LOGGER.info(eval_dict)
