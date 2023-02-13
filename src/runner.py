@@ -116,7 +116,6 @@ class ModelRunner():
             pbar = tqdm(train_loader, bar_format=TQDM_BAR_FORMAT)  # progress bar
             for i, (train_x, train_y) in enumerate(pbar):
                 # on_train_batch_start()
-                optimizer.zero_grad()
                 # Forward
                 train_x, train_y = train_x.to(device), train_y.to(device)
                 train_y_hat = model(train_x)
@@ -125,6 +124,7 @@ class ModelRunner():
                 # Backward
                 loss.backward()
                 optimizer.step()
+                optimizer.zero_grad()
 
                 # Collect Metric
                 metric_dict = {"train/loss": loss.item(), "train/epoch": epoch}
